@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>520 · CSS謎題</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+:root{
+  --bg:#0d1117;--panel:#161b22;--border:#30363d;
+  --accent:#58a6ff;--green:#3fb950;--gold:#d29922;
+  --red:#f85149;--purple:#bc8cff;--text:#c9d1d9;--dim:#8b949e;
+  --mono:'JetBrains Mono',monospace;--sans:'Noto Sans TC',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{font-size:16px;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding:0 0 60px;max-width:100vw;overflow-x:hidden;}
+
+/* TOP BAR */
+.top-bar{position:sticky;top:0;z-index:100;background:var(--panel);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:12px;}
+.top-bar-label{font-family:var(--mono);font-size:11px;color:var(--dim);white-space:nowrap;}
+.progress-track{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:2px;transition:width 0.6s cubic-bezier(.4,0,.2,1);width:0%;}
+.stage-dots{display:flex;gap:6px;}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:background 0.4s;flex-shrink:0;}
+.sdot.done{background:var(--green);}.sdot.active{background:var(--accent);}
+
+/* SCREENS */
+.screen{display:none;}.screen.active{display:block;animation:rise 0.5s ease;}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.wrap{max-width:100%;padding:24px 16px;}
+
+/* COMMON ATOMS */
+.file-tab{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--border);border-bottom:none;border-radius:6px 6px 0 0;padding:7px 12px;font-family:var(--mono);font-size:12px;color:var(--text);margin-bottom:-1px;}
+.file-tab .dot{width:7px;height:7px;border-radius:50%;}
+.dot-r{background:#ff5f57}.dot-y{background:#febc2e}.dot-g{background:#28c840}
+.code-block{background:var(--panel);border:1px solid var(--border);border-radius:0 6px 6px 6px;padding:20px 16px;font-family:var(--mono);font-size:12px;line-height:2;margin-bottom:24px;overflow-x:auto;}
+.ln{color:var(--border);user-select:none;margin-right:14px;min-width:16px;display:inline-block;text-align:right;}
+.k{color:var(--purple);}.p{color:var(--accent);}.v{color:var(--green);}.c{color:var(--dim);font-style:italic;}.s{color:#a5d6ff;}
+.intro-title{font-family:var(--mono);font-size:clamp(20px,5vw,30px);font-weight:700;color:var(--accent);margin:24px 0 8px;line-height:1.4;}
+.intro-sub{color:var(--dim);font-size:14px;line-height:1.9;margin-bottom:32px;}
+.btn{display:inline-block;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:13px;padding:12px 24px;cursor:pointer;border-radius:6px;transition:all 0.2s;letter-spacing:1px;min-height:44px;}
+.btn:active{background:rgba(88,166,255,0.15);}
+.puzzle-header{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.badge{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid;flex-shrink:0;}
+.badge-easy{border-color:var(--green);color:var(--green);}
+.badge-med{border-color:var(--gold);color:var(--gold);}
+.badge-hard{border-color:var(--red);color:var(--red);}
+.puzzle-title{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text);line-height:1.4;}
+.puzzle-desc{font-size:14px;line-height:1.9;color:var(--dim);margin-bottom:22px;}
+.puzzle-desc em{color:var(--text);font-style:normal;}
+.feedback{min-height:20px;font-family:var(--mono);font-size:12px;margin-top:10px;transition:all 0.3s;line-height:1.6;}
+.feedback.ok{color:var(--green);}.feedback.err{color:var(--red);}
+.hint-toggle{font-family:var(--mono);font-size:11px;color:var(--dim);cursor:pointer;text-decoration:underline;display:inline-block;margin-top:10px;min-height:36px;display:flex;align-items:center;}
+.hint-box{display:none;margin-top:8px;padding:12px 14px;background:rgba(210,153,34,0.07);border:1px solid rgba(210,153,34,0.25);border-radius:6px;font-family:var(--mono);font-size:11px;color:var(--gold);line-height:1.9;}
+@keyframes shk{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
+
+/* ── P1: DRAG REFACTOR ── */
+.css-snippet{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 14px 14px 14px;font-family:var(--mono);font-size:11px;line-height:1.9;margin-bottom:20px;position:relative;overflow-x:auto;}
+.css-snippet::before{content:attr(data-label);position:absolute;top:-1px;left:-1px;background:var(--purple);color:#0d1117;font-family:var(--mono);font-size:9px;padding:2px 9px;border-radius:5px 0 6px 0;font-weight:700;}
+.refactor-board{display:flex;flex-direction:column;gap:7px;margin-bottom:20px;}
+.code-line{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:11px 12px;font-family:var(--mono);font-size:11px;cursor:grab;user-select:none;min-height:44px;touch-action:none;}
+.code-line.dragging{opacity:0.3;border-color:var(--accent);}
+.code-line.drag-over{border-color:var(--accent);background:rgba(88,166,255,0.06);}
+.line-handle{color:var(--border);font-size:13px;flex-shrink:0;}
+.refactor-submit{display:inline-flex;align-items:center;background:transparent;border:1px solid var(--purple);color:var(--purple);font-family:var(--mono);font-size:12px;padding:11px 20px;cursor:pointer;border-radius:6px;transition:all 0.2s;margin-top:4px;min-height:44px;}
+.refactor-submit:active{background:rgba(188,140,255,0.12);}
+
+/* ── P2: BUG FIX ── */
+.editor-wrap{background:var(--bg);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:16px;}
+.editor-tabs{display:flex;background:var(--panel);border-bottom:1px solid var(--border);overflow-x:auto;}
+.etab{padding:8px 14px;font-family:var(--mono);font-size:11px;color:var(--dim);border-right:1px solid var(--border);white-space:nowrap;}
+.etab.active{color:var(--text);border-bottom:2px solid var(--accent);background:var(--bg);}
+.editor-body{display:flex;}
+.line-nums{padding:14px 10px;font-family:var(--mono);font-size:11px;color:var(--dim);text-align:right;border-right:1px solid var(--border);line-height:1.8;user-select:none;min-width:34px;}
+.editor-code{padding:14px 14px;font-family:var(--mono);font-size:11px;line-height:1.8;flex:1;overflow-x:auto;}
+.broken-line{display:inline-block;background:rgba(248,81,73,0.15);border:1px solid rgba(248,81,73,0.4);border-radius:3px;padding:0 4px;cursor:pointer;transition:all 0.2s;}
+.broken-line:active{background:rgba(248,81,73,0.3);}
+.broken-line.fixed{background:rgba(63,185,80,0.12);border-color:rgba(63,185,80,0.4);color:var(--green);cursor:default;pointer-events:none;}
+.fix-panel-label{font-family:var(--mono);font-size:11px;color:var(--dim);margin-bottom:8px;}
+.fix-options{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;}
+.fix-chip{padding:8px 14px;background:var(--panel);border:1px solid var(--border);border-radius:20px;font-family:var(--mono);font-size:11px;cursor:pointer;transition:all 0.2s;color:var(--text);min-height:38px;display:inline-flex;align-items:center;}
+.fix-chip:hover{border-color:var(--accent);color:var(--accent);}
+.fix-chip:active{background:rgba(88,166,255,0.08);}
+.fix-chip.used{opacity:0.25;pointer-events:none;text-decoration:line-through;}
+
+/* P2 heart preview */
+.p2-preview-wrap{border:1px solid var(--border);border-radius:6px;padding:20px 16px;text-align:center;margin:16px 0;min-height:100px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;}
+.heart-flip-scene{width:80px;height:80px;perspective:400px;cursor:default;}
+.heart-flip-card{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.6s ease;}
+.heart-flip-card.flipped{transform:rotateY(180deg);}
+.heart-face,.heart-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:36px;}
+.heart-back{background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);transform:rotateY(180deg);font-family:var(--sans);font-size:11px;color:var(--red);}
+.p2-status{font-family:var(--mono);font-size:11px;color:var(--dim);}
+
+/* P2 swap fallback notice */
+.swap-notice{background:rgba(210,153,34,0.08);border:1px solid rgba(210,153,34,0.25);border-radius:6px;padding:12px 14px;font-family:var(--mono);font-size:11px;color:var(--gold);line-height:1.8;margin-bottom:16px;display:none;}
+
+/* ── P3: TOKEN REFACTOR ── */
+.token-stage{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.token-row{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-family:var(--mono);font-size:12px;}
+.token-label{color:var(--dim);flex-shrink:0;min-width:70px;font-size:11px;}
+.token-value{color:var(--gold);flex:1;}
+.token-arrow{color:var(--border);font-size:18px;flex-shrink:0;}
+.token-input{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:6px 10px;color:var(--text);font-family:var(--mono);font-size:12px;width:100%;min-height:36px;outline:none;transition:border-color 0.2s;}
+.token-input:focus{border-color:var(--accent);}
+.token-input.correct{border-color:var(--green);color:var(--green);}
+.token-input.wrong{border-color:var(--red);animation:shk 0.3s ease;}
+.token-btn{display:inline-flex;align-items:center;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:12px;padding:10px 20px;cursor:pointer;border-radius:6px;transition:all 0.2s;min-height:44px;margin-top:4px;}
+.token-btn:active{background:rgba(88,166,255,0.12);}
+.preview-card{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:16px;}
+.preview-card-label{font-family:var(--mono);font-size:10px;color:var(--dim);margin-bottom:10px;}
+
+
+/* ── P5: MATCH DRAG ── */
+.match-area{display:flex;gap:10px;margin-bottom:20px;}
+.match-col{flex:1;display:flex;flex-direction:column;gap:8px;}
+.match-col-label{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.match-item{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-family:var(--mono);font-size:11px;color:var(--text);cursor:pointer;transition:all 0.2s;min-height:44px;display:flex;align-items:center;line-height:1.5;user-select:none;-webkit-tap-highlight-color:transparent;}
+.match-item.selected{border-color:var(--accent);color:var(--accent);background:rgba(88,166,255,0.08);}
+.match-item.matched-ok{border-color:var(--green);color:var(--green);background:rgba(63,185,80,0.08);cursor:default;}
+.match-item.matched-err{border-color:var(--red);color:var(--red);background:rgba(248,81,73,0.08);animation:shk 0.3s ease;}
+.match-lines{position:relative;width:28px;flex-shrink:0;display:flex;align-items:center;}
+.match-lines svg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible;}
+.p5-submit{display:inline-flex;align-items:center;background:transparent;border:1px solid var(--green);color:var(--green);font-family:var(--mono);font-size:12px;padding:11px 20px;cursor:pointer;border-radius:6px;transition:all 0.2s;min-height:44px;margin-top:4px;}
+.p5-submit:active{background:rgba(63,185,80,0.1);}
+
+/* ── FINAL ── */
+.terminal{background:var(--bg);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:28px;}
+.terminal-bar{background:var(--panel);border-bottom:1px solid var(--border);padding:9px 14px;display:flex;align-items:center;gap:7px;}
+.terminal-body{padding:20px 18px;font-family:var(--mono);font-size:13px;line-height:2.1;}
+.t-prompt{color:var(--green);}.t-cmd{color:var(--text);}.t-out{color:var(--dim);}
+.t-love{color:var(--purple);font-size:20px;font-weight:700;}
+.cursor{display:inline-block;width:9px;height:16px;background:var(--green);vertical-align:middle;animation:blink 1s step-end infinite;}
+@keyframes blink{50%{opacity:0}}
+.final-note{font-size:14px;line-height:2.1;color:var(--dim);text-align:center;}
+.final-note em{color:var(--text);font-style:normal;}
+
+/* ── P2 CHEATSHEET (P5 phase2) ── */
+.cs-header{background:var(--panel);border:1px solid var(--border);border-radius:6px 6px 0 0;padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:none;}
+.cs-badge{font-family:var(--mono);font-size:9px;padding:2px 9px;border-radius:20px;background:rgba(63,185,80,0.12);border:1px solid var(--green);color:var(--green);}
+.cs-title{font-family:var(--mono);font-size:11px;color:var(--text);}
+.cs-wrap{background:var(--bg);border:1px solid var(--border);border-radius:0 0 6px 6px;overflow:hidden;margin-bottom:18px;}
+.cs-section-hd{padding:9px 14px;background:var(--panel);font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--border);}
+.cs-row{display:flex;align-items:flex-start;border-bottom:1px solid rgba(48,54,61,0.6);}
+.cs-row:last-child{border-bottom:none;}
+.cs-tag-cell{padding:12px 10px;min-width:48px;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--border);flex-shrink:0;}
+.cs-tag{font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:20px;border:1px solid;white-space:nowrap;}
+.cs-content{padding:10px 12px;flex:1;}
+.cs-main{font-size:12px;color:var(--text);line-height:1.6;margin-bottom:2px;font-weight:500;}
+.cs-sub{font-family:var(--mono);font-size:10px;color:var(--dim);line-height:1.7;}
+.cs-sub em{color:var(--gold);font-style:normal;}
+.p5-phase{}.p5-phase.hidden{display:none;}
+.p5-to-final{display:inline-flex;align-items:center;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:12px;padding:11px 20px;cursor:pointer;border-radius:6px;transition:all 0.2s;min-height:44px;margin-top:8px;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <span class="top-bar-label">520.css</span>
+  <div class="progress-track"><div class="progress-fill" id="pFill"></div></div>
+  <div class="stage-dots">
+    <div class="sdot active" id="sd1"></div>
+    <div class="sdot" id="sd2"></div>
+    <div class="sdot" id="sd3"></div>
+    <div class="sdot" id="sd4"></div>
+  </div>
+</div>
+
+<!-- ══ INTRO ══ -->
+<div class="screen active" id="screen-intro"><div class="wrap">
+  <div class="file-tab">
+    <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+    &nbsp;520.css — 未讀 1 則訊息
+  </div>
+  <div class="code-block">
+    <div><span class="ln">1</span><span class="c">/* 今天請來當個解謎工程師 */</span></div>
+    <div><span class="ln">2</span></div>
+    <div><span class="ln">3</span><span class="k">:root</span> {</div>
+    <div><span class="ln">4</span>&nbsp;&nbsp;<span class="p">--date</span>: <span class="v">"5月20日"</span>;</div>
+    <div><span class="ln">5</span>&nbsp;&nbsp;<span class="p">--feeling</span>: <span class="v">❤️</span>;</div>
+    <div><span class="ln">6</span>&nbsp;&nbsp;<span class="p">--message</span>: <span class="v">???</span>; <span class="c">/* 需要解鎖 */</span></div>
+    <div><span class="ln">7</span>}</div>
+    <div><span class="ln">8</span></div>
+    <div><span class="ln">9</span><span class="k">.unlock</span> {</div>
+    <div><span class="ln">10</span>&nbsp;&nbsp;<span class="p">required</span>: <span class="v">5 puzzles</span>;</div>
+    <div><span class="ln">11</span>&nbsp;&nbsp;<span class="p">difficulty</span>: <span class="v">medium → easy → hard → medium → hard</span>;</div>
+    <div><span class="ln">12</span>}</div>
+  </div>
+  <div class="intro-title">// 五道CSS謎題<br>// 解完才能看到訊息</div>
+  <p class="intro-sub">身為前端工程師<br>這應該是全世界最適合你的情人節禮物了</p>
+  <button class="btn" onclick="goTo('screen-p1')">$ run puzzle.js →</button>
+</div></div>
+
+<!-- ══ P1: DRAG REFACTOR MEDIUM ══ -->
+<div class="screen" id="screen-p1"><div class="wrap">
+  <div class="puzzle-header">
+    <span class="badge badge-med">MEDIUM</span>
+    <span class="puzzle-title">Code Review：重構這段 CSS</span>
+  </div>
+  <p class="puzzle-desc">
+    這段 CSS 有<em>重複屬性</em>和<em>冗餘預設值</em>——<br>
+    把六行拖曳成最佳化順序，後兩格標記為刪除。<br>
+    保留 4 行、刪去 2 行、排列最整潔。
+  </p>
+  <div class="css-snippet" data-label="原始 style.css（待重構）">
+    <span class="k">.heart-btn</span> {<br>
+    &nbsp;&nbsp;<span class="p">display</span>: <span class="v">inline-block</span>; <span class="c">/* 被後面覆蓋 */</span><br>
+    &nbsp;&nbsp;<span class="p">cursor</span>: <span class="v">pointer</span>;<br>
+    &nbsp;&nbsp;<span class="p">display</span>: <span class="v">flex</span>; <span class="c">/* 重複了 */</span><br>
+    &nbsp;&nbsp;<span class="p">color</span>: <span class="v">inherit</span>; <span class="c">/* 多餘，這是預設值 */</span><br>
+    &nbsp;&nbsp;<span class="p">align-items</span>: <span class="v">center</span>;<br>
+    &nbsp;&nbsp;<span class="p">justify-content</span>: <span class="v">center</span>;<br>
+    &nbsp;&nbsp;<span class="p">cursor</span>: <span class="v">pointer</span>; <span class="c">/* 重複了 */</span><br>
+    }
+  </div>
+  <p style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-bottom:10px">// 拖曳排列（後兩格 = 標記刪除）：</p>
+  <div class="refactor-board" id="refactorBoard"></div>
+  <button class="refactor-submit" onclick="checkP1()">$ git commit -m "refactor" →</button>
+  <div class="feedback" id="fb1"></div>
+</div></div>
+
+<!-- ══ P2: BUG FIX EASY ══ -->
+<div class="screen" id="screen-p2"><div class="wrap">
+  <div class="puzzle-header">
+    <span class="badge badge-easy">EASY</span>
+    <span class="puzzle-title" id="p2Title">修復壞掉的CSS</span>
+  </div>
+  <p class="puzzle-desc" id="p2Desc">
+    這段 CSS 有 <em>5 個錯誤</em>——<em>點紅色錯誤處</em>選正確值。<br>
+    修好後愛心會從<em>灰色變紅</em>，點擊還能翻面喔 💙
+  </p>
+  <div class="swap-notice" id="swapNotice"></div>
+  <div class="editor-wrap">
+    <div class="editor-tabs">
+      <div class="etab active">style.css</div>
+      <div class="etab">index.html</div>
+    </div>
+    <div class="editor-body">
+      <div class="line-nums" id="p2LineNums"></div>
+      <div class="editor-code" id="p2EditorCode"></div>
+    </div>
+  </div>
+  <div id="fix-panel" style="display:none;">
+    <p class="fix-panel-label">// 選正確的值：</p>
+    <div class="fix-options" id="fixOptions"></div>
+  </div>
+  <div class="p2-preview-wrap">
+    <div class="heart-flip-scene" id="heartScene" onclick="flipHeart()">
+      <div class="heart-flip-card" id="heartCard">
+        <div class="heart-face" id="heartFace">🩶</div>
+        <div class="heart-back" id="heartBack">不愧是你</div>
+      </div>
+    </div>
+    <div class="p2-status" id="p2Status">修好 5 個錯誤，愛心才會變紅</div>
+  </div>
+  <div class="feedback" id="fb2"></div>
+</div></div>
+
+<!-- ══ P3: TOKEN VARIABLE HARD ══ -->
+<div class="screen" id="screen-p3"><div class="wrap">
+  <div class="puzzle-header">
+    <span class="badge badge-hard">HARD</span>
+    <span class="puzzle-title">消滅魔法數字</span>
+  </div>
+  <p class="puzzle-desc">
+    選定一個按鈕元件，把裡面的<em>魔法數字</em>換成<em>自訂 CSS token 變數</em>。<br>
+    規則：變數名稱要有意義，格式為 <em>--前綴-屬性名</em>。
+  </p>
+
+  <div class="preview-card">
+    <div class="preview-card-label">// 待重構的按鈕樣式：</div>
+    <div style="font-family:var(--mono);font-size:11px;line-height:2;color:var(--dim);">
+      <span class="k">.submit-btn</span> {<br>
+      &nbsp;&nbsp;<span class="p">padding</span>: <span id="magicPadding" style="color:var(--gold)">13px 24px</span>;<br>
+      &nbsp;&nbsp;<span class="p">border-radius</span>: <span id="magicRadius" style="color:var(--gold)">8px</span>;<br>
+      &nbsp;&nbsp;<span class="p">font-size</span>: <span id="magicFont" style="color:var(--gold)">16px</span>;<br>
+      &nbsp;&nbsp;<span class="p">margin-bottom</span>: <span id="magicMargin" style="color:var(--gold)">47px</span>;<br>
+      }
+    </div>
+  </div>
+
+  <p style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-bottom:12px">// 幫每個魔法數字取一個有意義的 token 變數名（不含冒號和值）：</p>
+
+  <div class="token-stage" id="tokenStage"></div>
+
+  <button class="token-btn" onclick="checkP3()">$ apply tokens →</button>
+  <div class="feedback" id="fb3"></div>
+
+  <span class="hint-toggle" onclick="toggleHint('h3')">// 需要提示?</span>
+  <div class="hint-box" id="h3">
+    命名規則：<em>--元件-屬性</em> 或 <em>--前綴-語義</em><br>
+    例如 padding: 13px 24px → <em>--btn-padding</em><br>
+    border-radius: 8px → <em>--btn-radius</em><br>
+    格式：開頭必須是 <em>--</em>，英文小寫加連字號
+  </div>
+</div></div>
+
+
+<!-- ══ P5: MATCH + CHEATSHEET HARD ══ -->
+<div class="screen" id="screen-p5"><div class="wrap">
+  <div class="puzzle-header">
+    <span class="badge badge-hard">HARD</span>
+    <span class="puzzle-title">CSS 概念配對</span>
+  </div>
+
+  <div class="p5-phase" id="p5-phase1">
+    <p class="puzzle-desc">
+      左邊是 CSS 屬性或選擇器，右邊是說明。<br>
+      <em>先點左邊選一個，再點右邊配對</em>——全部配對正確才能過關。
+    </p>
+    <div class="match-area">
+      <div class="match-col">
+        <div class="match-col-label">CSS</div>
+        <div id="matchLeft"></div>
+      </div>
+      <div class="match-lines" id="matchLines">
+        <svg id="matchSvg" style="width:28px;height:100%;overflow:visible;"></svg>
+      </div>
+      <div class="match-col">
+        <div class="match-col-label">說明</div>
+        <div id="matchRight"></div>
+      </div>
+    </div>
+    <div class="feedback" id="fb5a"></div>
+    <span class="hint-toggle" onclick="toggleHint('h5')">// 需要提示?</span>
+    <div class="hint-box" id="h5">
+      想想每個屬性最核心的用途：<br>
+      z-index 跟堆疊順序有關；<br>
+      :checked 是表單狀態；<br>
+      will-change 是效能優化提示；<br>
+      contain 是渲染隔離；<br>
+      aspect-ratio 是長寬比
+    </div>
+  </div>
+
+  <div class="p5-phase hidden" id="p5-phase2">
+    <p class="puzzle-desc">全部配對正確！彩蛋解鎖 🔓<br>
+    這是一份 <em>Google Play 內測上架送審小抄</em>，留著備用 💙</p>
+    <div class="cs-header">
+      <span class="cs-badge">🔓 UNLOCKED</span>
+      <span class="cs-title">google-play-checklist.md</span>
+    </div>
+    <div class="cs-wrap">
+      <div class="cs-section-hd">必要條件 — 沒做到直接退回</div>
+      <div class="cs-row"><div class="cs-tag-cell"><span class="cs-tag" style="border-color:var(--red);color:var(--red)">必要</span></div><div class="cs-content"><div class="cs-main">versionCode 必須遞增</div><div class="cs-sub">每次上傳，<em>versionCode</em> 必須大於前一版</div></div></div>
+      <div class="cs-row"><div class="cs-tag-cell"><span class="cs-tag" style="border-color:var(--red);color:var(--red)">必要</span></div><div class="cs-content"><div class="cs-main">至少 1 位測試者已接受邀請</div><div class="cs-sub">Play Console → 內部測試 → 測試人員，需對方點連結<em>接受</em></div></div></div>
+      <div class="cs-row"><div class="cs-tag-cell"><span class="cs-tag" style="border-color:var(--red);color:var(--red)">必要</span></div><div class="cs-content"><div class="cs-main">隱私政策 URL 已填寫</div><div class="cs-sub">需要有效的 HTTPS 連結，<em>GitHub Pages / Notion</em> 頁面都可以</div></div></div>
+      <div class="cs-row"><div class="cs-tag-cell"><span class="cs-tag" style="border-color:var(--red);color:var(--red)">必要</span></div><div class="cs-content"><div class="cs-main">商店資訊完整</div><div class="cs-sub"><em>512×512 icon、Feature Graphic 1024×500</em>、至少 2 張截圖、內容分級</div></div></div>
+      <div class="cs-row"><div class="cs-tag-cell"><span class="cs-tag" style="border-color:var(--red);color:var(--red)">必要</span></div><div class="cs-content"><div class="cs-main">release keystore 簽名（非 debug）</div><div class="cs-sub">建議開啟 <em>Play App Signing</em> 讓 Google 管理金鑰</div></div></div>
+      <div class="cs-section-hd">常見踩雷</div>
+      <div class="cs-row"><div class="cs-tag-cell"><span class="cs-tag" style="border-color:var(--gold);color:var(--gold)">注意</span></div><div class="cs-content"><div class="cs-main">targetSdkVersion ≥ 34</div><div class="cs-sub">Android 14，新 APP 強制要求</div></div></div>
+      <div class="cs-row"><div class="cs-tag-cell"><span class="cs-tag" style="border-color:var(--gold);color:var(--gold)">注意</span></div><div class="cs-content"><div class="cs-main">有登入流程？提供測試帳號</div><div class="cs-sub">應用程式內容 → <em>應用程式存取方式</em></div></div></div>
+      <div class="cs-row"><div class="cs-tag-cell"><span class="cs-tag" style="border-color:var(--accent);color:var(--accent)">建議</span></div><div class="cs-content"><div class="cs-main">實機測試，確認無 crash on launch</div><div class="cs-sub">用 <em>adb logcat</em> 或 Firebase Crashlytics 確認</div></div></div>
+    </div>
+    <button class="p5-to-final" onclick="goTo('screen-final')">$ cat message.txt →</button>
+  </div>
+</div></div>
+
+<!-- ══ FINAL ══ -->
+<div class="screen" id="screen-final"><div class="wrap">
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-left:7px">zsh — 520.css</span>
+    </div>
+    <div class="terminal-body">
+      <div><span class="t-prompt">❯</span> <span class="t-cmd">cat message.txt</span></div>
+      <div class="t-out">// 解鎖成功 ✓ — 5/5 passed</div>
+      <div class="t-out">// 日期: 2026-05-20</div>
+      <div class="t-out">// 狀態: 💚 compiled successfully</div>
+      <div>&nbsp;</div>
+      <div class="t-love">期待下一個 520 吧～</div>
+      <div>&nbsp;</div>
+      <div><span class="t-prompt">❯</span> <span class="cursor"></span></div>
+    </div>
+  </div>
+  <p class="final-note">
+    你寫的程式讓畫面動起來<br>
+    你讓我的生活也 <em>render</em> 得更好看了<br><br>
+    <em>Happy 520 💙</em>
+  </p>
+</div></div>
+
+<script>
+/* ══ NAV ══ */
+const PMAP={'screen-intro':0,'screen-p1':20,'screen-p2':40,'screen-p3':60,'screen-p5':80,'screen-final':100};
+const SORDER=['screen-p1','screen-p2','screen-p3','screen-p5'];
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('pFill').style.width=(PMAP[id]||0)+'%';
+  const cur=SORDER.indexOf(id);
+  for(let i=1;i<=4;i++){
+    const el=document.getElementById('sd'+i);if(!el)continue;
+    const idx=i-1;
+    if(id==='screen-final'){el.className='sdot done';continue;}
+    if(idx<cur)el.className='sdot done';
+    else if(idx===cur)el.className='sdot active';
+    else el.className='sdot';
+  }
+}
+function setFb(id,msg,type){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.className='feedback '+type;}
+function toggleHint(id){const b=document.getElementById(id);b.style.display=b.style.display==='block'?'none':'block';}
+
+/* ══ P1: DRAG REFACTOR ══ */
+const LINES=[
+  {text:'display: inline-block;',keep:false},
+  {text:'display: flex;',keep:true},
+  {text:'align-items: center;',keep:true},
+  {text:'cursor: pointer;',keep:true},
+  {text:'color: inherit;',keep:false},
+  {text:'justify-content: center;',keep:true},
+];
+const CORRECT_ORDER=[1,2,5,3];
+let lineOrder=[0,1,2,3,4,5],dragSrc=null,touchSrc=null;
+
+function buildBoard(){
+  const board=document.getElementById('refactorBoard');
+  board.innerHTML='';
+  lineOrder.forEach((li,pos)=>{
+    const line=LINES[li];const isDel=pos>=4;
+    const div=document.createElement('div');
+    div.className='code-line';div.draggable=true;div.dataset.pos=pos;
+    if(isDel){div.style.borderColor='rgba(248,81,73,0.4)';div.style.background='rgba(248,81,73,0.06)';}
+    div.innerHTML=`<span class="line-handle">⠿</span><span style="font-family:var(--mono);font-size:10px;color:var(--dim);min-width:16px;text-align:right">${pos+1}</span><span style="flex:1;font-family:var(--mono);font-size:11px;color:${isDel?'var(--red)':'var(--green)'}">${esc(line.text)}</span>${isDel?'<span style="font-family:var(--mono);font-size:9px;color:var(--red)">✕</span>':''}`;
+    div.addEventListener('dragstart',()=>{dragSrc=pos;div.classList.add('dragging');});
+    div.addEventListener('dragend',()=>div.classList.remove('dragging'));
+    div.addEventListener('dragover',e=>{e.preventDefault();div.classList.add('drag-over');});
+    div.addEventListener('dragleave',()=>div.classList.remove('drag-over'));
+    div.addEventListener('drop',e=>{e.preventDefault();div.classList.remove('drag-over');if(dragSrc===null||dragSrc===pos)return;swap(dragSrc,pos);dragSrc=null;buildBoard();});
+    // Touch support
+    div.addEventListener('touchstart',e=>{touchSrc=pos;div.classList.add('dragging');},{passive:true});
+    div.addEventListener('touchend',e=>{
+      div.classList.remove('dragging');
+      const touch=e.changedTouches[0];
+      const el=document.elementFromPoint(touch.clientX,touch.clientY);
+      const target=el?.closest('.code-line');
+      if(target&&touchSrc!==null){
+        const destPos=parseInt(target.dataset.pos);
+        if(destPos!==touchSrc){swap(touchSrc,destPos);buildBoard();}
+      }
+      touchSrc=null;
+    });
+    board.appendChild(div);
+  });
+}
+function swap(a,b){[lineOrder[a],lineOrder[b]]=[lineOrder[b],lineOrder[a]];}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function checkP1(){
+  const kept=lineOrder.slice(0,4),deleted=lineOrder.slice(4);
+  const shouldDel=LINES.map((l,i)=>l.keep?-1:i).filter(i=>i>=0);
+  if(!shouldDel.every(i=>deleted.includes(i))){setFb('fb1','✗ 刪除的行不正確——找找重複屬性和預設值','err');return;}
+  if(!CORRECT_ORDER.every((li,pos)=>kept[pos]===li)){setFb('fb1','✗ 刪除正確，順序還需調整——display→align-items→justify-content→cursor','err');return;}
+  setFb('fb1','✓ 完美重構！→ 進入第二關','ok');
+  setTimeout(()=>goTo('screen-p2'),1600);
+}
+buildBoard();
+
+/* ══ P2: BUG FIX EASY (with swap fallback) ══ */
+/* --- VERSION A: 5 bugs, heart color + flip --- */
+const BUG_SET_A = {
+  title:'修復壞掉的CSS',
+  desc:'這段 CSS 有 <em>5 個錯誤</em>——<em>點紅色錯誤處</em>選正確值。<br>修好後愛心會從<em>灰色變紅</em>，點擊還能翻面喔 💙',
+  lines:['<span class="k">.heart-card</span> {','  <span class="p">display</span>: <span class="v">flex</span>;','  <span class="p">justify-content</span>: [BUG:1];','  <span class="p">align-items</span>: [BUG:2];','  <span class="p">background</span>: [BUG:3];','  <span class="p">border</span>: [BUG:4];','  <span class="p">border-radius</span>: [BUG:5];','  <span class="p">cursor</span>: <span class="v">pointer</span>;','}'],
+  bugs:{
+    1:{wrong:'left',correct:'center',opts:['center','flex-start','space-between','right']},
+    2:{wrong:'top',correct:'center',opts:['center','flex-end','baseline','stretch']},
+    3:{wrong:'#888888',correct:'#f85149',opts:['#f85149','#ff0000','#cc0000','#888888']},
+    4:{wrong:'none',correct:'2px solid #f85149',opts:['2px solid #f85149','1px dashed #ff6b9d','none','2px solid transparent']},
+    5:{wrong:'0',correct:'50%',opts:['50%','8px','4px','0']},
+  },
+  total:5
+};
+/* --- VERSION B: 3 bugs, grid/flex reduction (swap fallback) --- */
+const BUG_SET_B = {
+  title:'修復壞掉的CSS（換題）',
+  desc:'這段 CSS 使用了<em>多餘的 flex 巢狀</em>——找出 <em>3 個問題</em>修正它，讓排版更精簡 🛠',
+  lines:['<span class="k">.card-layout</span> {','  <span class="p">display</span>: [BUG:1];','  <span class="p">flex-direction</span>: <span class="v">column</span>;','  <span class="p">gap</span>: [BUG:2];','  <span class="p">padding</span>: <span class="v">16px</span>;','}','<span class="k">.card-layout .row</span> {','  <span class="p">display</span>: [BUG:3];','  <span class="p">justify-content</span>: <span class="v">space-between</span>;','}'],
+  bugs:{
+    1:{wrong:'grid',correct:'flex',opts:['flex','grid','block','inline-flex']},
+    2:{wrong:'0 0 8px 0',correct:'8px',opts:['8px','0 0 8px 0','16px','0']},
+    3:{wrong:'grid',correct:'flex',opts:['flex','grid','inline-block','table']},
+  },
+  total:3
+};
+
+let p2ActiveSet = 'A';
+let fixedBugs = new Set();
+let wrongCounts = {};
+let currentBugN = null;
+
+function initP2(setKey){
+  p2ActiveSet = setKey;
+  fixedBugs = new Set();
+  wrongCounts = {};
+  currentBugN = null;
+  const S = setKey==='A'?BUG_SET_A:BUG_SET_B;
+  document.getElementById('p2Title').textContent = S.title;
+  document.getElementById('p2Desc').innerHTML = S.desc;
+  document.getElementById('fix-panel').style.display='none';
+  document.getElementById('fb2').textContent='';document.getElementById('fb2').className='feedback';
+  // Build editor
+  const nums=[];const code=[];
+  S.lines.forEach((line,i)=>{
+    nums.push(i+1);
+    const rendered=line.replace(/\[BUG:(\d+)\]/g,(_,n)=>`<span id="bug${n}" class="broken-line" onclick="selectBug(${n})">${S.bugs[n].wrong}</span>`);
+    code.push(rendered);
+  });
+  document.getElementById('p2LineNums').innerHTML=nums.join('<br>');
+  document.getElementById('p2EditorCode').innerHTML=code.join('<br>');
+  // Reset heart
+  if(setKey==='A'){
+    document.getElementById('heartScene').style.display='flex';
+    document.getElementById('heartFace').textContent='🩶';
+    document.getElementById('heartCard').classList.remove('flipped');
+    document.getElementById('p2Status').textContent=`修好 ${S.total} 個錯誤，愛心才會變紅`;
+  } else {
+    document.getElementById('heartScene').style.display='none';
+    document.getElementById('p2Status').textContent=`修好 ${S.total} 個問題`;
+  }
+}
+
+function selectBug(n){
+  if(fixedBugs.has(n))return;
+  currentBugN=n;
+  const S=p2ActiveSet==='A'?BUG_SET_A:BUG_SET_B;
+  document.getElementById('fix-panel').style.display='block';
+  const row=document.getElementById('fixOptions');
+  row.innerHTML='';
+  S.bugs[n].opts.slice().sort(()=>Math.random()-0.5).forEach(opt=>{
+    const c=document.createElement('button');c.className='fix-chip';c.textContent=opt;
+    c.onclick=()=>applyFix(n,opt,c);row.appendChild(c);
+  });
+}
+
+function applyFix(n,val,chip){
+  const S=p2ActiveSet==='A'?BUG_SET_A:BUG_SET_B;
+  if(val===S.bugs[n].correct){
+    fixedBugs.add(n);
+    const el=document.getElementById('bug'+n);
+    el.textContent=val;el.classList.add('fixed');
+    document.getElementById('fix-panel').style.display='none';
+    updateP2Preview();
+    if(fixedBugs.size===S.total){
+      if(p2ActiveSet==='A'){
+        setFb('fb2','✓ 全部修好！愛心變紅了，點它試試 💙','ok');
+      } else {
+        setFb('fb2','✓ 全部修好！flex 巢狀清爽多了 → 進入第三關','ok');
+        setTimeout(()=>goTo('screen-p3'),1800);
+      }
+    } else {
+      setFb('fb2','✓ 修好了！還剩 '+(S.total-fixedBugs.size)+' 個錯誤','ok');
+    }
+  } else {
+    chip.classList.add('used');
+    if(p2ActiveSet==='A'){
+      wrongCounts[n]=(wrongCounts[n]||0)+1;
+      if(wrongCounts[n]>=2){
+        const notice=document.getElementById('swapNotice');
+        notice.style.display='block';
+        notice.textContent='// 選錯太多次了，換一道題吧 → 題目已替換';
+        setFb('fb2','','');
+        setTimeout(()=>{notice.style.display='none';initP2('B');},1200);
+      } else {
+        setFb('fb2','✗ 這個值不對，還有一次機會','err');
+      }
+    } else {
+      setFb('fb2','✗ 這個值不對，繼續選看看','err');
+    }
+  }
+}
+
+function updateP2Preview(){
+  if(p2ActiveSet!=='A')return;
+  const S=BUG_SET_A;const done=fixedBugs.size;
+  const hf=document.getElementById('heartFace');
+  const st=document.getElementById('p2Status');
+  if(done===S.total){
+    hf.textContent='❤️';
+    st.textContent='愛心修好了！點它試試 👇';
+    document.getElementById('heartScene').style.cursor='pointer';
+    setTimeout(()=>goTo('screen-p3'),2200);
+  } else if(done>=3){
+    hf.textContent='🧡';st.textContent=`進度 ${done}/${S.total} — 快了！`;
+  } else if(done>=1){
+    hf.textContent='💛';st.textContent=`進度 ${done}/${S.total} — 有點感覺了`;
+  }
+}
+
+function flipHeart(){
+  if(fixedBugs.size<BUG_SET_A.total)return;
+  const card=document.getElementById('heartCard');
+  card.classList.toggle('flipped');
+}
+
+initP2('A');
+
+/* ══ P3: TOKEN REFACTOR ══ */
+const TOKENS=[
+  {prop:'padding',magic:'13px 24px',placeholder:'例：--btn-padding'},
+  {prop:'border-radius',magic:'8px',placeholder:'例：--btn-radius'},
+  {prop:'font-size',magic:'16px',placeholder:'例：--btn-font-size'},
+  {prop:'margin-bottom',magic:'47px',placeholder:'例：--btn-margin-bottom'},
+];
+const VALID_PREFIXES=['--btn-','--button-','--submit-','--form-'];
+const ACCEPT=[
+  ['--btn-padding','--button-padding','--submit-padding','--form-padding','--btn-space','--btn-gap'],
+  ['--btn-radius','--button-radius','--btn-border-radius','--button-border-radius','--btn-round','--btn-corners'],
+  ['--btn-font-size','--button-font-size','--btn-text-size','--btn-fs','--btn-font','--button-font'],
+  ['--btn-margin','--button-margin','--btn-margin-bottom','--button-margin-bottom','--btn-gap-bottom','--btn-spacing'],
+];
+
+function buildTokenStage(){
+  const stage=document.getElementById('tokenStage');
+  stage.innerHTML='';
+  TOKENS.forEach((t,i)=>{
+    const row=document.createElement('div');row.className='token-row';
+    row.innerHTML=`<span class="token-label">${t.prop}</span><span class="token-value">${t.magic}</span><span class="token-arrow">→</span><input class="token-input" id="ti${i}" placeholder="${t.placeholder}" autocomplete="off" spellcheck="false">`;
+    stage.appendChild(row);
+  });
+}
+
+function checkP3(){
+  let allOk=true;
+  TOKENS.forEach((t,i)=>{
+    const inp=document.getElementById('ti'+i);
+    const val=inp.value.trim().toLowerCase();
+    inp.classList.remove('correct','wrong');
+    const ok=val.startsWith('--') && val.length>4 && ACCEPT[i].some(a=>a===val) ||
+              (val.startsWith('--') && val.length>4 && VALID_PREFIXES.some(p=>val.startsWith(p)));
+    if(ok){inp.classList.add('correct');}
+    else{inp.classList.add('wrong');allOk=false;}
+  });
+  if(!allOk){
+    setFb('fb3','✗ 有些變數名不符合規範——格式：--前綴-屬性，紅色的需要修正','err');
+    setTimeout(()=>{document.querySelectorAll('.token-input.wrong').forEach(i=>{i.classList.remove('wrong');});},1000);
+  } else {
+    setFb('fb3','✓ 所有 token 命名正確！魔法數字消滅 → 進入第五關','ok');
+    setTimeout(()=>goTo('screen-p5'),1800);
+  }
+}
+buildTokenStage();
+
+
+/* ══ P5: CONCEPT MATCHING ══ */
+const MATCH_PAIRS=[
+  {left:'z-index',right:'控制元素的堆疊順序，需搭配 position 使用'},
+  {left:':checked',right:'偵測 radio / checkbox 勾選狀態的偽類'},
+  {left:'will-change',right:'提前告訴瀏覽器哪個屬性會改變，優化渲染效能'},
+  {left:'contain',right:'限制元素的渲染影響範圍，避免 reflow 擴散'},
+  {left:'aspect-ratio',right:'直接設定元素的寬高比例，例如 16/9'},
+];
+
+// Shuffle right side
+const leftItems=[...MATCH_PAIRS];
+const rightItems=[...MATCH_PAIRS].sort(()=>Math.random()-0.5);
+
+let selectedLeft=null,selectedRight=null;
+const connections={}; // leftIdx -> rightIdx
+
+function buildMatch(){
+  const lCol=document.getElementById('matchLeft');
+  const rCol=document.getElementById('matchRight');
+  lCol.innerHTML='';rCol.innerHTML='';
+
+  leftItems.forEach((item,i)=>{
+    const div=document.createElement('div');div.className='match-item';div.textContent=item.left;div.dataset.idx=i;
+    div.onclick=()=>selectLeft(div,i);lCol.appendChild(div);
+  });
+  rightItems.forEach((item,i)=>{
+    const div=document.createElement('div');div.className='match-item';div.style.fontSize='10px';div.style.lineHeight='1.5';div.textContent=item.right;div.dataset.idx=i;
+    div.onclick=()=>selectRight(div,i);rCol.appendChild(div);
+  });
+}
+
+function selectLeft(div,i){
+  if(div.classList.contains('matched-ok'))return;
+  document.querySelectorAll('#matchLeft .match-item').forEach(d=>d.classList.remove('selected'));
+  div.classList.add('selected');selectedLeft={div,i};
+  if(selectedRight)tryMatch();
+}
+function selectRight(div,i){
+  if(div.classList.contains('matched-ok'))return;
+  document.querySelectorAll('#matchRight .match-item').forEach(d=>d.classList.remove('selected'));
+  div.classList.add('selected');selectedRight={div,i};
+  if(selectedLeft)tryMatch();
+}
+
+function tryMatch(){
+  const li=selectedLeft.i,ri=selectedRight.i;
+  const lDiv=selectedLeft.div;
+  const rDiv=selectedRight.div;
+  selectedLeft=null;selectedRight=null;
+  const leftTerm=leftItems[li].left;
+  const rightDesc=rightItems[ri].right;
+  const correct=MATCH_PAIRS.find(p=>p.left===leftTerm&&p.right===rightDesc);
+  if(correct){
+    lDiv.classList.remove('selected');lDiv.classList.add('matched-ok');
+    rDiv.classList.remove('selected');rDiv.classList.add('matched-ok');
+    connections[li]=ri;drawLines();
+    const matched=Object.keys(connections).length;
+    setFb('fb5a','✓ 正確！'+(MATCH_PAIRS.length-matched)+' 組還沒配','ok');
+    if(matched===MATCH_PAIRS.length){
+      setFb('fb5a','✓ 全部配對正確！彩蛋解鎖中…','ok');
+      setTimeout(()=>{
+        document.getElementById('p5-phase1').classList.add('hidden');
+        document.getElementById('p5-phase2').classList.remove('hidden');
+        window.scrollTo({top:0,behavior:'smooth'});
+      },1200);
+    }
+  } else {
+    lDiv.classList.remove('selected');lDiv.classList.add('matched-err');
+    rDiv.classList.remove('selected');rDiv.classList.add('matched-err');
+    setFb('fb5a','✗ 配對錯誤，再想想','err');
+    setTimeout(()=>{
+      lDiv.classList.remove('matched-err');
+      rDiv.classList.remove('matched-err');
+    },500);
+  }
+}
+
+function drawLines(){
+  const svg=document.getElementById('matchSvg');
+  const linesEl=document.getElementById('matchLines');
+  svg.innerHTML='';
+  const lRect=linesEl.getBoundingClientRect();
+  Object.entries(connections).forEach(([li,ri])=>{
+    const lDiv=document.querySelectorAll('#matchLeft .match-item')[li];
+    const rDiv=document.querySelectorAll('#matchRight .match-item')[ri];
+    if(!lDiv||!rDiv)return;
+    const lR=lDiv.getBoundingClientRect();
+    const rR=rDiv.getBoundingClientRect();
+    const y1=lR.top+lR.height/2-lRect.top;
+    const y2=rR.top+rR.height/2-lRect.top;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1','0');line.setAttribute('y1',y1);
+    line.setAttribute('x2','28');line.setAttribute('y2',y2);
+    line.setAttribute('stroke','var(--green)');line.setAttribute('stroke-width','1.5');line.setAttribute('opacity','0.6');
+    svg.appendChild(line);
+  });
+}
+
+buildMatch();
+</script>
+</body>
+</html>
