@@ -176,7 +176,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
     <div><span class="ln">12</span>}</div>
   </div>
   <div class="intro-title">// 三道CSS謎題<br>// 解完才能看到訊息</div>
-  <p class="intro-sub">身為前端工程師<br>這應該是全世界最適合你的情人節禮物了</p>
+  <p class="intro-sub">身為前端工程師<br>這應該是你最擅長的禮物了</p>
   <button class="btn" onclick="goTo('screen-p1')">$ run puzzle.js →</button>
 </div></div>
 
@@ -216,7 +216,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   </div>
   <p class="puzzle-desc" id="p2Desc">
     這段 CSS 有 <em>5 個錯誤</em>——<em>點紅色錯誤處</em>選正確值。<br>
-    修好後愛心會從<em>灰色變紅</em>，點擊還能翻面喔 💙
+    修好這顆愛心吧 💙
   </p>
   <div class="swap-notice" id="swapNotice"></div>
   <div class="editor-wrap">
@@ -240,7 +240,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
         <div class="heart-back" id="heartBack">不愧是你</div>
       </div>
     </div>
-    <div class="p2-status" id="p2Status">修好 5 個錯誤，愛心才會變紅</div>
+    <div class="p2-status" id="p2Status">修好 5 個錯誤</div>
   </div>
   <div class="feedback" id="fb2"></div>
 </div></div>
@@ -286,7 +286,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 
   <div class="p5-phase hidden" id="p5-phase2">
     <p class="puzzle-desc">全部配對正確！彩蛋解鎖 🔓<br>
-    這是一份 <em>Google Play 內測上架送審小抄</em>，留著備用 💙</p>
+    這是一份 <em>Google Play 內測上架送審小抄</em>，就算你現在用不到，也要留著喔~ 💙</p>
     <div class="cs-header">
       <span class="cs-badge">🔓 UNLOCKED</span>
       <span class="cs-title">google-play-checklist.md</span>
@@ -326,7 +326,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
     </div>
   </div>
   <p class="final-note">
-    你寫的程式讓畫面動起來<br>
+    有你真好<br>
     你讓我的生活也 <em>render</em> 得更好看了<br><br>
     <em>Happy 520 💙</em>
   </p>
@@ -443,7 +443,7 @@ buildBoard();
 /* --- VERSION A: 5 bugs, heart color + flip --- */
 const BUG_SET_A = {
   title:'修復壞掉的CSS',
-  desc:'這段 CSS 有 <em>5 個錯誤</em>——<em>點紅色錯誤處</em>選正確值。<br>修好後愛心會從<em>灰色變紅</em>，點擊還能翻面喔 💙',
+  desc:'這段 CSS 有 <em>5 個錯誤</em>——<em>點紅色錯誤處</em>選正確值。<br>修好後記得翻一下愛心喔 💙',
   lines:['<span class="k">.heart-card</span> {','  <span class="p">display</span>: <span class="v">flex</span>;','  <span class="p">justify-content</span>: [BUG:1];','  <span class="p">align-items</span>: [BUG:2];','  <span class="p">background</span>: [BUG:3];','  <span class="p">border</span>: [BUG:4];','  <span class="p">border-radius</span>: [BUG:5];','  <span class="p">cursor</span>: <span class="v">pointer</span>;','}'],
   bugs:{
     1:{wrong:'left',correct:'center',opts:['center','flex-start','space-between','right']},
@@ -528,7 +528,7 @@ function applyFix(n,val,chip){
       if(p2ActiveSet==='A'){
         setFb('fb2','✓ 全部修好！愛心變紅了，點它試試 💙','ok');
       } else {
-        setFb('fb2','✓ 全部修好！flex 巢狀清爽多了 → 進入第五關','ok');
+        setFb('fb2','✓ 全部修好！flex 巢狀清爽多了 → 進入第三關','ok');
         setTimeout(()=>goTo('screen-p5'),1800);
       }
     } else {
@@ -541,7 +541,7 @@ function applyFix(n,val,chip){
       if(wrongCounts[n]>=2){
         const notice=document.getElementById('swapNotice');
         notice.style.display='block';
-        notice.textContent='// 選錯太多次了，換一道題吧 → 題目已替換';
+        notice.textContent='// 選錯太多次了，讓你試試看另一題吧 → 題目已替換';
         setFb('fb2','','');
         setTimeout(()=>{notice.style.display='none';initP2('B');},1200);
       } else {
@@ -639,7 +639,7 @@ function tryMatch(){
     const matched=Object.keys(connections).length;
     setFb('fb5a','✓ 正確！'+(MATCH_PAIRS.length-matched)+' 組還沒配','ok');
     if(matched===MATCH_PAIRS.length){
-      setFb('fb5a','✓ 全部配對正確！彩蛋解鎖中…','ok');
+      setFb('fb5a','✓ 全部配對正確！神秘彩蛋解鎖中…','ok');
       setTimeout(()=>{
         document.getElementById('p5-phase1').classList.add('hidden');
         document.getElementById('p5-phase2').classList.remove('hidden');
