@@ -61,8 +61,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .css-snippet::before{content:attr(data-label);position:absolute;top:-1px;left:-1px;background:var(--purple);color:#0d1117;font-family:var(--mono);font-size:9px;padding:2px 9px;border-radius:5px 0 6px 0;font-weight:700;}
 .refactor-board{display:flex;flex-direction:column;gap:7px;margin-bottom:20px;}
 .code-line{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:11px 12px;font-family:var(--mono);font-size:11px;cursor:grab;user-select:none;min-height:44px;touch-action:none;}
-.code-line.dragging{opacity:0.3;border-color:var(--accent);}
-.code-line.drag-over{border-color:var(--accent);background:rgba(88,166,255,0.06);}
+.code-line.drag-placeholder{opacity:0.18;border:1px dashed rgba(88,166,255,0.45) !important;background:transparent !important;}
+.code-line.drag-over{border-color:var(--accent);background:rgba(88,166,255,0.12);box-shadow:0 0 0 2px rgba(88,166,255,0.28);}
+.drag-ghost{position:fixed;pointer-events:none;z-index:1000;border-radius:6px;box-shadow:0 12px 32px rgba(0,0,0,0.55);transform:rotate(0.6deg) scale(1.03);opacity:0.92;transition:none !important;}
 .line-handle{color:var(--border);font-size:13px;flex-shrink:0;}
 .refactor-submit{display:inline-flex;align-items:center;background:transparent;border:1px solid var(--purple);color:var(--purple);font-family:var(--mono);font-size:12px;padding:11px 20px;cursor:pointer;border-radius:6px;transition:all 0.2s;margin-top:4px;min-height:44px;}
 .refactor-submit:active{background:rgba(188,140,255,0.12);}
@@ -363,7 +364,7 @@ const LINES=[
   {text:'justify-content: center;',keep:true},
 ];
 const CORRECT_ORDER=[1,2,5,3];
-let lineOrder=[0,1,2,3,4,5],dragSrc=null,touchSrc=null;
+let lineOrder=[0,1,2,3,4,5],dragState=null;
 
 function buildBoard(){
   const board=document.getElementById('refactorBoard');
@@ -371,30 +372,61 @@ function buildBoard(){
   lineOrder.forEach((li,pos)=>{
     const line=LINES[li];const isDel=pos>=4;
     const div=document.createElement('div');
-    div.className='code-line';div.draggable=true;div.dataset.pos=pos;
+    div.className='code-line';div.dataset.pos=pos;
     if(isDel){div.style.borderColor='rgba(248,81,73,0.4)';div.style.background='rgba(248,81,73,0.06)';}
     div.innerHTML=`<span class="line-handle">⠿</span><span style="font-family:var(--mono);font-size:10px;color:var(--dim);min-width:16px;text-align:right">${pos+1}</span><span style="flex:1;font-family:var(--mono);font-size:11px;color:${isDel?'var(--red)':'var(--green)'}">${esc(line.text)}</span>${isDel?'<span style="font-family:var(--mono);font-size:9px;color:var(--red)">✕</span>':''}`;
-    div.addEventListener('dragstart',()=>{dragSrc=pos;div.classList.add('dragging');});
-    div.addEventListener('dragend',()=>div.classList.remove('dragging'));
-    div.addEventListener('dragover',e=>{e.preventDefault();div.classList.add('drag-over');});
-    div.addEventListener('dragleave',()=>div.classList.remove('drag-over'));
-    div.addEventListener('drop',e=>{e.preventDefault();div.classList.remove('drag-over');if(dragSrc===null||dragSrc===pos)return;swap(dragSrc,pos);dragSrc=null;buildBoard();});
-    // Touch support
-    div.addEventListener('touchstart',e=>{touchSrc=pos;div.classList.add('dragging');},{passive:true});
-    div.addEventListener('touchend',e=>{
-      div.classList.remove('dragging');
-      const touch=e.changedTouches[0];
-      const el=document.elementFromPoint(touch.clientX,touch.clientY);
-      const target=el?.closest('.code-line');
-      if(target&&touchSrc!==null){
-        const destPos=parseInt(target.dataset.pos);
-        if(destPos!==touchSrc){swap(touchSrc,destPos);buildBoard();}
-      }
-      touchSrc=null;
-    });
+    div.addEventListener('pointerdown',e=>startDrag(e,div,pos));
     board.appendChild(div);
   });
 }
+
+function startDrag(e,el,pos){
+  if(e.button>0)return;
+  e.preventDefault();
+  const rect=el.getBoundingClientRect();
+  const ghost=el.cloneNode(true);
+  ghost.classList.add('drag-ghost');
+  ghost.style.width=rect.width+'px';
+  ghost.style.top=rect.top+'px';
+  ghost.style.left=rect.left+'px';
+  document.body.appendChild(ghost);
+  el.classList.add('drag-placeholder');
+  dragState={srcPos:pos,srcEl:el,ghost,offsetX:e.clientX-rect.left,offsetY:e.clientY-rect.top,targetPos:pos};
+  el.setPointerCapture(e.pointerId);
+  el.addEventListener('pointermove',onDragMove);
+  el.addEventListener('pointerup',onDragEnd);
+  el.addEventListener('pointercancel',onDragEnd);
+}
+
+function onDragMove(e){
+  if(!dragState)return;
+  const{ghost,offsetX,offsetY,srcPos}=dragState;
+  ghost.style.top=(e.clientY-offsetY)+'px';
+  ghost.style.left=(e.clientX-offsetX)+'px';
+  const items=[...document.querySelectorAll('#refactorBoard .code-line')];
+  let best=srcPos,bestDist=Infinity;
+  items.forEach(item=>{
+    item.classList.remove('drag-over');
+    const r=item.getBoundingClientRect();
+    const dist=Math.abs(e.clientY-(r.top+r.height/2));
+    if(dist<bestDist){bestDist=dist;best=parseInt(item.dataset.pos);}
+  });
+  dragState.targetPos=best;
+  if(best!==srcPos)items.find(el=>parseInt(el.dataset.pos)===best)?.classList.add('drag-over');
+}
+
+function onDragEnd(e){
+  if(!dragState)return;
+  const{srcEl,ghost,srcPos,targetPos}=dragState;
+  srcEl.removeEventListener('pointermove',onDragMove);
+  srcEl.removeEventListener('pointerup',onDragEnd);
+  srcEl.removeEventListener('pointercancel',onDragEnd);
+  ghost.remove();
+  dragState=null;
+  if(targetPos!==srcPos)swap(srcPos,targetPos);
+  buildBoard();
+}
+
 function swap(a,b){[lineOrder[a],lineOrder[b]]=[lineOrder[b],lineOrder[a]];}
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function checkP1(){
