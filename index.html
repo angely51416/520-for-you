@@ -97,20 +97,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 /* P2 swap fallback notice */
 .swap-notice{background:rgba(210,153,34,0.08);border:1px solid rgba(210,153,34,0.25);border-radius:6px;padding:12px 14px;font-family:var(--mono);font-size:11px;color:var(--gold);line-height:1.8;margin-bottom:16px;display:none;}
 
-/* ── P3: TOKEN REFACTOR ── */
-.token-stage{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
-.token-row{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-family:var(--mono);font-size:12px;}
-.token-label{color:var(--dim);flex-shrink:0;min-width:70px;font-size:11px;}
-.token-value{color:var(--gold);flex:1;}
-.token-arrow{color:var(--border);font-size:18px;flex-shrink:0;}
-.token-input{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:6px 10px;color:var(--text);font-family:var(--mono);font-size:12px;width:100%;min-height:36px;outline:none;transition:border-color 0.2s;}
-.token-input:focus{border-color:var(--accent);}
-.token-input.correct{border-color:var(--green);color:var(--green);}
-.token-input.wrong{border-color:var(--red);animation:shk 0.3s ease;}
-.token-btn{display:inline-flex;align-items:center;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:12px;padding:10px 20px;cursor:pointer;border-radius:6px;transition:all 0.2s;min-height:44px;margin-top:4px;}
-.token-btn:active{background:rgba(88,166,255,0.12);}
-.preview-card{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:16px;}
-.preview-card-label{font-family:var(--mono);font-size:10px;color:var(--dim);margin-bottom:10px;}
 
 
 /* ── P5: MATCH DRAG ── */
@@ -165,7 +151,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
     <div class="sdot active" id="sd1"></div>
     <div class="sdot" id="sd2"></div>
     <div class="sdot" id="sd3"></div>
-    <div class="sdot" id="sd4"></div>
   </div>
 </div>
 
@@ -185,11 +170,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
     <div><span class="ln">7</span>}</div>
     <div><span class="ln">8</span></div>
     <div><span class="ln">9</span><span class="k">.unlock</span> {</div>
-    <div><span class="ln">10</span>&nbsp;&nbsp;<span class="p">required</span>: <span class="v">5 puzzles</span>;</div>
-    <div><span class="ln">11</span>&nbsp;&nbsp;<span class="p">difficulty</span>: <span class="v">medium → easy → hard → medium → hard</span>;</div>
+    <div><span class="ln">10</span>&nbsp;&nbsp;<span class="p">required</span>: <span class="v">3 puzzles</span>;</div>
+    <div><span class="ln">11</span>&nbsp;&nbsp;<span class="p">difficulty</span>: <span class="v">medium → easy → hard</span>;</div>
     <div><span class="ln">12</span>}</div>
   </div>
-  <div class="intro-title">// 五道CSS謎題<br>// 解完才能看到訊息</div>
+  <div class="intro-title">// 三道CSS謎題<br>// 解完才能看到訊息</div>
   <p class="intro-sub">身為前端工程師<br>這應該是全世界最適合你的情人節禮物了</p>
   <button class="btn" onclick="goTo('screen-p1')">$ run puzzle.js →</button>
 </div></div>
@@ -259,44 +244,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   <div class="feedback" id="fb2"></div>
 </div></div>
 
-<!-- ══ P3: TOKEN VARIABLE HARD ══ -->
-<div class="screen" id="screen-p3"><div class="wrap">
-  <div class="puzzle-header">
-    <span class="badge badge-hard">HARD</span>
-    <span class="puzzle-title">消滅魔法數字</span>
-  </div>
-  <p class="puzzle-desc">
-    選定一個按鈕元件，把裡面的<em>魔法數字</em>換成<em>自訂 CSS token 變數</em>。<br>
-    規則：變數名稱要有意義，格式為 <em>--前綴-屬性名</em>。
-  </p>
-
-  <div class="preview-card">
-    <div class="preview-card-label">// 待重構的按鈕樣式：</div>
-    <div style="font-family:var(--mono);font-size:11px;line-height:2;color:var(--dim);">
-      <span class="k">.submit-btn</span> {<br>
-      &nbsp;&nbsp;<span class="p">padding</span>: <span id="magicPadding" style="color:var(--gold)">13px 24px</span>;<br>
-      &nbsp;&nbsp;<span class="p">border-radius</span>: <span id="magicRadius" style="color:var(--gold)">8px</span>;<br>
-      &nbsp;&nbsp;<span class="p">font-size</span>: <span id="magicFont" style="color:var(--gold)">16px</span>;<br>
-      &nbsp;&nbsp;<span class="p">margin-bottom</span>: <span id="magicMargin" style="color:var(--gold)">47px</span>;<br>
-      }
-    </div>
-  </div>
-
-  <p style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-bottom:12px">// 幫每個魔法數字取一個有意義的 token 變數名（不含冒號和值）：</p>
-
-  <div class="token-stage" id="tokenStage"></div>
-
-  <button class="token-btn" onclick="checkP3()">$ apply tokens →</button>
-  <div class="feedback" id="fb3"></div>
-
-  <span class="hint-toggle" onclick="toggleHint('h3')">// 需要提示?</span>
-  <div class="hint-box" id="h3">
-    命名規則：<em>--元件-屬性</em> 或 <em>--前綴-語義</em><br>
-    例如 padding: 13px 24px → <em>--btn-padding</em><br>
-    border-radius: 8px → <em>--btn-radius</em><br>
-    格式：開頭必須是 <em>--</em>，英文小寫加連字號
-  </div>
-</div></div>
 
 
 <!-- ══ P5: MATCH + CHEATSHEET HARD ══ -->
@@ -368,7 +315,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
     </div>
     <div class="terminal-body">
       <div><span class="t-prompt">❯</span> <span class="t-cmd">cat message.txt</span></div>
-      <div class="t-out">// 解鎖成功 ✓ — 5/5 passed</div>
+      <div class="t-out">// 解鎖成功 ✓ — 3/3 passed</div>
       <div class="t-out">// 日期: 2026-05-20</div>
       <div class="t-out">// 狀態: 💚 compiled successfully</div>
       <div>&nbsp;</div>
@@ -386,15 +333,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 
 <script>
 /* ══ NAV ══ */
-const PMAP={'screen-intro':0,'screen-p1':20,'screen-p2':40,'screen-p3':60,'screen-p5':80,'screen-final':100};
-const SORDER=['screen-p1','screen-p2','screen-p3','screen-p5'];
+const PMAP={'screen-intro':0,'screen-p1':33,'screen-p2':66,'screen-p5':90,'screen-final':100};
+const SORDER=['screen-p1','screen-p2','screen-p5'];
 function goTo(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
   document.getElementById('pFill').style.width=(PMAP[id]||0)+'%';
   const cur=SORDER.indexOf(id);
-  for(let i=1;i<=4;i++){
+  for(let i=1;i<=3;i++){
     const el=document.getElementById('sd'+i);if(!el)continue;
     const idx=i-1;
     if(id==='screen-final'){el.className='sdot done';continue;}
@@ -549,8 +496,8 @@ function applyFix(n,val,chip){
       if(p2ActiveSet==='A'){
         setFb('fb2','✓ 全部修好！愛心變紅了，點它試試 💙','ok');
       } else {
-        setFb('fb2','✓ 全部修好！flex 巢狀清爽多了 → 進入第三關','ok');
-        setTimeout(()=>goTo('screen-p3'),1800);
+        setFb('fb2','✓ 全部修好！flex 巢狀清爽多了 → 進入第五關','ok');
+        setTimeout(()=>goTo('screen-p5'),1800);
       }
     } else {
       setFb('fb2','✓ 修好了！還剩 '+(S.total-fixedBugs.size)+' 個錯誤','ok');
@@ -583,7 +530,7 @@ function updateP2Preview(){
     hf.textContent='❤️';
     st.textContent='愛心修好了！點它試試 👇';
     document.getElementById('heartScene').style.cursor='pointer';
-    setTimeout(()=>goTo('screen-p3'),2200);
+    setTimeout(()=>goTo('screen-p5'),2200);
   } else if(done>=3){
     hf.textContent='🧡';st.textContent=`進度 ${done}/${S.total} — 快了！`;
   } else if(done>=1){
@@ -599,51 +546,6 @@ function flipHeart(){
 
 initP2('A');
 
-/* ══ P3: TOKEN REFACTOR ══ */
-const TOKENS=[
-  {prop:'padding',magic:'13px 24px',placeholder:'例：--btn-padding'},
-  {prop:'border-radius',magic:'8px',placeholder:'例：--btn-radius'},
-  {prop:'font-size',magic:'16px',placeholder:'例：--btn-font-size'},
-  {prop:'margin-bottom',magic:'47px',placeholder:'例：--btn-margin-bottom'},
-];
-const VALID_PREFIXES=['--btn-','--button-','--submit-','--form-'];
-const ACCEPT=[
-  ['--btn-padding','--button-padding','--submit-padding','--form-padding','--btn-space','--btn-gap'],
-  ['--btn-radius','--button-radius','--btn-border-radius','--button-border-radius','--btn-round','--btn-corners'],
-  ['--btn-font-size','--button-font-size','--btn-text-size','--btn-fs','--btn-font','--button-font'],
-  ['--btn-margin','--button-margin','--btn-margin-bottom','--button-margin-bottom','--btn-gap-bottom','--btn-spacing'],
-];
-
-function buildTokenStage(){
-  const stage=document.getElementById('tokenStage');
-  stage.innerHTML='';
-  TOKENS.forEach((t,i)=>{
-    const row=document.createElement('div');row.className='token-row';
-    row.innerHTML=`<span class="token-label">${t.prop}</span><span class="token-value">${t.magic}</span><span class="token-arrow">→</span><input class="token-input" id="ti${i}" placeholder="${t.placeholder}" autocomplete="off" spellcheck="false">`;
-    stage.appendChild(row);
-  });
-}
-
-function checkP3(){
-  let allOk=true;
-  TOKENS.forEach((t,i)=>{
-    const inp=document.getElementById('ti'+i);
-    const val=inp.value.trim().toLowerCase();
-    inp.classList.remove('correct','wrong');
-    const ok=val.startsWith('--') && val.length>4 && ACCEPT[i].some(a=>a===val) ||
-              (val.startsWith('--') && val.length>4 && VALID_PREFIXES.some(p=>val.startsWith(p)));
-    if(ok){inp.classList.add('correct');}
-    else{inp.classList.add('wrong');allOk=false;}
-  });
-  if(!allOk){
-    setFb('fb3','✗ 有些變數名不符合規範——格式：--前綴-屬性，紅色的需要修正','err');
-    setTimeout(()=>{document.querySelectorAll('.token-input.wrong').forEach(i=>{i.classList.remove('wrong');});},1000);
-  } else {
-    setFb('fb3','✓ 所有 token 命名正確！魔法數字消滅 → 進入第五關','ok');
-    setTimeout(()=>goTo('screen-p5'),1800);
-  }
-}
-buildTokenStage();
 
 
 /* ══ P5: CONCEPT MATCHING ══ */
